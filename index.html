@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dofeel</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #fff5f8;
+      --card-bg: #ffffff;
+      --primary: #f472b6;
+      --primary-dark: #a855f7;
+      --text: #2d2d2d;
+      --text-light: #888;
+      --border: #e5e7eb;
+      --radius: 18px;
+      --nav-height: 56px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* ===== NAVIGATION ===== */
+    .main-nav {
+      display: flex;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      height: var(--nav-height);
+    }
+    .main-nav button {
+      flex: 1;
+      background: none;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-light);
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .main-nav button.active {
+      color: var(--primary-dark);
+    }
+    .main-nav button.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 20%;
+      right: 20%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+      border-radius: 3px 3px 0 0;
+    }
+
+    /* ===== SCREENS ===== */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ===== HOME SCREEN ===== */
+    #screen-home {
+      padding: 16px;
+      padding-bottom: 100px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin: 20px 0 12px;
+      padding-left: 4px;
+    }
+    .section-title:first-child { margin-top: 8px; }
+
+    /* ===== BUTTON GRID ===== */
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .choice-btn {
+      padding: 14px 12px;
+      border-radius: 16px;
+      border: 2.5px solid transparent;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #3d3d3d;
+      text-align: left;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .choice-btn:active {
+      transform: scale(0.96);
+    }
+    .choice-btn.selected {
+      border-color: rgba(0,0,0,0.35);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+      transform: scale(0.97);
+    }
+    .choice-btn .emoji {
+      font-size: 22px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .choice-btn .label {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    /* Activity button colors */
+    .btn-activity-0 { background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); }
+    .btn-activity-1 { background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); }
+    .btn-activity-2 { background: linear-gradient(135deg, #fef9c3 0%, #fde68a 100%); }
+    .btn-activity-3 { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); }
+    .btn-activity-4 { background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%); }
+    .btn-activity-5 { background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); }
+    .btn-activity-6 { background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); }
+
+    /* Mood button colors */
+    .btn-mood-0  { background: linear-gradient(135deg, #fecdd3 0%, #fda4af 100%); }
+    .btn-mood-1  { background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%); }
+    .btn-mood-2  { background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%); }
+    .btn-mood-3  { background: linear-gradient(135deg, #fecdd3 0%, #f9a8d4 100%); }
+    .btn-mood-4  { background: linear-gradient(135deg, #bbf7d0 0%, #86efac 100%); }
+    .btn-mood-5  { background: linear-gradient(135deg, #fef08a 0%, #fde68a 100%); }
+    .btn-mood-6  { background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%); }
+    .btn-mood-7  { background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%); }
+    .btn-mood-8  { background: linear-gradient(135deg, #bfdbfe 0%, #a5b4fc 100%); }
+    .btn-mood-9  { background: linear-gradient(135deg, #d1d5db 0%, #e5e7eb 100%); }
+    .btn-mood-10 { background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); }
+    .btn-mood-11 { background: linear-gradient(135deg, #fed7aa 0%, #fb923c 100%); }
+
+    /* ===== POST BUTTON ===== */
+    .post-area {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 600px;
+      padding: 12px 16px 20px;
+      background: linear-gradient(to top, var(--bg) 80%, transparent);
+      z-index: 50;
+    }
+    #post-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      border: none;
+      border-radius: 20px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);
+    }
+    #post-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    #post-btn:not(:disabled):active {
+      transform: scale(0.98);
+    }
+
+    /* ===== POST SUCCESS ANIMATION ===== */
+    #post-success {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.6);
+      background: rgba(30, 30, 40, 0.85);
+      backdrop-filter: blur(8px);
+      color: white;
+      border-radius: 50%;
+      width: 90px;
+      height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 999;
+    }
+    #post-success.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    #post-success.hide {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(1.2);
+    }
+
+    /* ===== STATS SCREEN ===== */
+    #screen-stats {
+      padding-bottom: 40px;
+    }
+
+    .sub-tab-nav {
+      display: flex;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 0 8px;
+    }
+    .sub-tab-nav button {
+      flex: 1;
+      padding: 12px 4px;
+      background: none;
+      border: none;
+      border-bottom: 2.5px solid transparent;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-light);
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+      white-space: nowrap;
+    }
+    .sub-tab-nav button.active {
+      color: var(--primary-dark);
+      border-bottom-color: var(--primary-dark);
+    }
+
+    .sub-tab { display: none; padding: 16px; }
+    .sub-tab.active { display: block; }
+
+    /* ===== HEATMAP ===== */
+    .heatmap-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .heatmap-table {
+      border-collapse: collapse;
+      font-size: 11px;
+      width: 100%;
+      table-layout: fixed;
+    }
+    .heatmap-table th {
+      text-align: center;
+      padding: 4px 2px;
+      font-weight: 600;
+      color: var(--text-light);
+      font-size: 11px;
+      background: var(--card-bg);
+    }
+    .heatmap-table .hour-label {
+      text-align: right;
+      padding-right: 6px;
+      color: var(--text-light);
+      font-size: 10px;
+      white-space: nowrap;
+      width: 32px;
+    }
+    .heatmap-table td.heat-cell {
+      height: 26px;
+      border: 1px solid rgba(255,255,255,0.5);
+      cursor: pointer;
+      border-radius: 3px;
+      transition: filter 0.1s;
+      position: relative;
+    }
+    .heatmap-table td.heat-cell:active {
+      filter: brightness(0.8);
+    }
+
+    /* ===== CHARTS ===== */
+    .chart-wrapper {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .chart-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    canvas {
+      max-height: 260px;
+    }
+
+    /* ===== POPUP ===== */
+    #popup-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    #popup-overlay.show { display: flex; }
+    #popup-content {
+      background: var(--card-bg);
+      border-radius: 20px 20px 0 0;
+      padding: 20px 16px 32px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 60vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    #popup-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--primary-dark);
+    }
+    .popup-post-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .popup-post-item:last-child { border-bottom: none; }
+    .popup-time { color: var(--text-light); font-size: 12px; min-width: 44px; }
+    .popup-close {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      background: none;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      color: var(--text-light);
+    }
+
+    /* ===== DANGER ZONE ===== */
+    .danger-zone {
+      margin: 24px 16px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .btn-danger {
+      padding: 12px;
+      border-radius: 12px;
+      border: 2px solid #ef4444;
+      background: none;
+      color: #ef4444;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-danger:active {
+      background: #ef4444;
+      color: white;
+    }
+    .btn-secondary {
+      padding: 12px;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: none;
+      color: var(--text-light);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-secondary:active {
+      background: var(--border);
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      text-align: center;
+      padding: 48px 16px;
+      color: var(--text-light);
+    }
+    .empty-state .emoji { font-size: 48px; display: block; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; }
+
+    /* ===== STATS HEADER ===== */
+    .stats-header {
+      padding: 16px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .stats-count {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--primary-dark);
+    }
+    .stats-count-label {
+      font-size: 13px;
+      color: var(--text-light);
+    }
+
+    /* ===== APP HEADER ===== */
+    .app-header {
+      padding: 16px 16px 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .app-logo {
+      font-size: 22px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Main Navigation -->
+<nav class="main-nav">
+  <button id="nav-home" class="active" onclick="switchMainTab('home')">
+    <span>📝</span> 投稿
+  </button>
+  <button id="nav-stats" onclick="switchMainTab('stats')">
+    <span>📊</span> 統計
+  </button>
+</nav>
+
+<!-- ===== SCREEN 1: HOME ===== -->
+<section id="screen-home" class="screen active">
+  <div class="app-header">
+    <span class="app-logo">dofeel</span>
+  </div>
+
+  <h2 class="section-title">今何してる？</h2>
+  <div class="button-grid" id="activity-grid"></div>
+
+  <h2 class="section-title">今どんな気持ち？</h2>
+  <div class="button-grid" id="mood-grid"></div>
+
+  <div class="post-area">
+    <button id="post-btn" disabled onclick="handlePost()">投稿する</button>
+  </div>
+</section>
+
+<!-- ===== SCREEN 2: STATS ===== -->
+<section id="screen-stats" class="screen">
+  <div class="stats-header">
+    <div class="stats-count" id="total-count">0</div>
+    <div class="stats-count-label">件の記録</div>
+  </div>
+
+  <nav class="sub-tab-nav">
+    <button id="subtab-heatmap" class="active" onclick="switchSubTab('heatmap')">ヒートマップ</button>
+    <button id="subtab-frequency" onclick="switchSubTab('frequency')">投稿頻度</button>
+    <button id="subtab-pie" onclick="switchSubTab('pie')">気持ちの割合</button>
+  </nav>
+
+  <!-- Sub-tab: Heatmap -->
+  <div id="tab-heatmap" class="sub-tab active">
+    <div id="heatmap-body"></div>
+  </div>
+
+  <!-- Sub-tab: Frequency chart -->
+  <div id="tab-frequency" class="sub-tab">
+    <div class="chart-wrapper">
+      <div class="chart-title">時間帯別 投稿頻度</div>
+      <canvas id="freq-chart"></canvas>
+    </div>
+  </div>
+
+  <!-- Sub-tab: Pie charts -->
+  <div id="tab-pie" class="sub-tab">
+    <div class="chart-wrapper">
+      <div class="chart-title">気持ちの割合</div>
+      <canvas id="mood-pie-chart"></canvas>
+    </div>
+    <div class="chart-wrapper">
+      <div class="chart-title">活動の割合</div>
+      <canvas id="activity-pie-chart"></canvas>
+    </div>
+  </div>
+
+  <!-- Danger zone -->
+  <div class="danger-zone">
+    <button class="btn-secondary" onclick="injectTestData()">🎲 テストデータを投入</button>
+    <button class="btn-danger" onclick="deleteAllPosts()">🗑️ 全履歴を削除</button>
+  </div>
+</section>
+
+<!-- Post success overlay -->
+<div id="post-success">✓</div>
+
+<!-- Heatmap popup -->
+<div id="popup-overlay" onclick="closePopup(event)">
+  <div id="popup-content">
+    <button class="popup-close" onclick="closePopupBtn()">✕</button>
+    <div id="popup-title"></div>
+    <div id="popup-list"></div>
+  </div>
+</div>
+
+<script>
+// ===== DATA DEFINITIONS =====
+
+const ACTIVITIES = [
+  { key: '勉強',     emoji: '📚' },
+  { key: 'チルタイム', emoji: '😴' },
+  { key: '食事',     emoji: '🍚' },
+  { key: '移動',     emoji: '🚶' },
+  { key: '運動',     emoji: '💪' },
+  { key: '読書',     emoji: '📖' },
+  { key: '趣味',     emoji: '🎮' },
+];
+
+const MOODS = [
+  { key: '体の疲労',    emoji: '😩' },
+  { key: '頭の疲労',    emoji: '🤯' },
+  { key: '悲しい',     emoji: '😢' },
+  { key: 'イライラ',    emoji: '😤' },
+  { key: '楽しい',     emoji: '😄' },
+  { key: '嬉しい',     emoji: '🥰' },
+  { key: 'ひらめき',   emoji: '💡' },
+  { key: '承認欲求',   emoji: '🫣' },
+  { key: '将来への不安', emoji: '😰' },
+  { key: 'エンジン不調', emoji: '🫠' },
+  { key: 'めんどくさい', emoji: '😑' },
+  { key: 'やる気！',   emoji: '🔥' },
+];
+
+const DAYS_JP = ['月', '火', '水', '木', '金', '土', '日'];
+// JS getDay(): 0=Sun, 1=Mon, ..., 6=Sat → index for Mon-Sun: Mon=0
+function dayIndex(date) {
+  const d = date.getDay(); // 0=Sun
+  return d === 0 ? 6 : d - 1; // Mon=0, Sun=6
+}
+
+// ===== STATE =====
+let selectedActivity = null;
+let selectedMood = null;
+let freqChart = null;
+let moodPieChart = null;
+let activityPieChart = null;
+
+// ===== LOCAL STORAGE =====
+function loadPosts() {
+  try {
+    const raw = localStorage.getItem('dofeel_posts');
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function savePosts(posts) {
+  localStorage.setItem('dofeel_posts', JSON.stringify(posts));
+}
+
+function generateId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+// ===== RENDER BUTTONS =====
+function renderActivityButtons() {
+  const grid = document.getElementById('activity-grid');
+  grid.innerHTML = '';
+  ACTIVITIES.forEach((item, i) => {
+    const btn = document.createElement('button');
+    btn.className = `choice-btn btn-activity-${i}`;
+    btn.dataset.type = 'activity';
+    btn.dataset.key = item.key;
+    btn.innerHTML = `<span class="emoji">${item.emoji}</span><span class="label">${item.key}</span>`;
+    btn.addEventListener('click', () => selectButton('activity', item.key, btn));
+    grid.appendChild(btn);
+  });
+}
+
+function renderMoodButtons() {
+  const grid = document.getElementById('mood-grid');
+  grid.innerHTML = '';
+  MOODS.forEach((item, i) => {
+    const btn = document.createElement('button');
+    btn.className = `choice-btn btn-mood-${i}`;
+    btn.dataset.type = 'mood';
+    btn.dataset.key = item.key;
+    btn.innerHTML = `<span class="emoji">${item.emoji}</span><span class="label">${item.key}</span>`;
+    btn.addEventListener('click', () => selectButton('mood', item.key, btn));
+    grid.appendChild(btn);
+  });
+}
+
+function selectButton(type, key, clickedBtn) {
+  if (type === 'activity') {
+    if (selectedActivity === key) {
+      selectedActivity = null;
+      clickedBtn.classList.remove('selected');
+    } else {
+      document.querySelectorAll('#activity-grid .choice-btn').forEach(b => b.classList.remove('selected'));
+      selectedActivity = key;
+      clickedBtn.classList.add('selected');
+    }
+  } else {
+    if (selectedMood === key) {
+      selectedMood = null;
+      clickedBtn.classList.remove('selected');
+    } else {
+      document.querySelectorAll('#mood-grid .choice-btn').forEach(b => b.classList.remove('selected'));
+      selectedMood = key;
+      clickedBtn.classList.add('selected');
+    }
+  }
+  updatePostButton();
+}
+
+function updatePostButton() {
+  const btn = document.getElementById('post-btn');
+  btn.disabled = !selectedActivity && !selectedMood;
+}
+
+// ===== POST =====
+function handlePost() {
+  if (!selectedActivity && !selectedMood) return;
+
+  const posts = loadPosts();
+  const post = {
+    id: generateId(),
+    timestamp: new Date().toISOString(),
+    activity: selectedActivity || null,
+    mood: selectedMood || null,
+  };
+  posts.push(post);
+  savePosts(posts);
+
+  // Reset selections
+  selectedActivity = null;
+  selectedMood = null;
+  document.querySelectorAll('.choice-btn.selected').forEach(b => b.classList.remove('selected'));
+  updatePostButton();
+
+  // Show success animation
+  showPostSuccess();
+}
+
+function showPostSuccess() {
+  const el = document.getElementById('post-success');
+  el.classList.remove('hide');
+  el.classList.add('show');
+  setTimeout(() => {
+    el.classList.remove('show');
+    el.classList.add('hide');
+    setTimeout(() => el.classList.remove('hide'), 300);
+  }, 700);
+}
+
+// ===== TAB SWITCHING =====
+function switchMainTab(tab) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.main-nav button').forEach(b => b.classList.remove('active'));
+
+  if (tab === 'home') {
+    document.getElementById('screen-home').classList.add('active');
+    document.getElementById('nav-home').classList.add('active');
+  } else {
+    document.getElementById('screen-stats').classList.add('active');
+    document.getElementById('nav-stats').classList.add('active');
+    renderStats();
+  }
+}
+
+function switchSubTab(tab) {
+  document.querySelectorAll('.sub-tab').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sub-tab-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('subtab-' + tab).classList.add('active');
+
+  if (tab === 'frequency') renderFrequencyChart();
+  else if (tab === 'pie') renderPieCharts();
+}
+
+// ===== STATS =====
+function renderStats() {
+  const posts = loadPosts();
+  document.getElementById('total-count').textContent = posts.length;
+
+  const activeSubTab = document.querySelector('.sub-tab.active');
+  if (!activeSubTab) return;
+  const tabId = activeSubTab.id.replace('tab-', '');
+  if (tabId === 'heatmap') renderHeatmap();
+  else if (tabId === 'frequency') renderFrequencyChart();
+  else if (tabId === 'pie') renderPieCharts();
+}
+
+// ===== HEATMAP =====
+function renderHeatmap() {
+  const posts = loadPosts();
+  const body = document.getElementById('heatmap-body');
+
+  if (posts.length === 0) {
+    body.innerHTML = `<div class="empty-state"><span class="emoji">📭</span><p>まだ記録がありません</p></div>`;
+    return;
+  }
+
+  // Build count map: counts[hour][day] = count
+  const counts = Array.from({ length: 24 }, () => new Array(7).fill(0));
+  // Build post map: postMap[hour][day] = [post, ...]
+  const postMap = Array.from({ length: 24 }, () => Array.from({ length: 7 }, () => []));
+
+  posts.forEach(p => {
+    const d = new Date(p.timestamp);
+    const hour = d.getHours();
+    const day = dayIndex(d);
+    counts[hour][day]++;
+    postMap[hour][day].push(p);
+  });
+
+  const maxCount = Math.max(...counts.flat(), 1);
+
+  let html = `<div class="heatmap-container"><table class="heatmap-table"><thead><tr><th></th>`;
+  DAYS_JP.forEach(d => { html += `<th>${d}</th>`; });
+  html += `</tr></thead><tbody>`;
+
+  for (let h = 0; h < 24; h++) {
+    html += `<tr><td class="hour-label">${h}時</td>`;
+    for (let d = 0; d < 7; d++) {
+      const c = counts[h][d];
+      const intensity = c / maxCount;
+      const alpha = c === 0 ? 0 : 0.15 + intensity * 0.75;
+      const bg = c === 0 ? '#f3f4f6' : `rgba(168, 85, 247, ${alpha})`;
+      const title = c > 0 ? `${h}時・${DAYS_JP[d]}曜: ${c}件` : '';
+      html += `<td class="heat-cell" style="background:${bg}" data-hour="${h}" data-day="${d}" title="${title}"></td>`;
+    }
+    html += `</tr>`;
+  }
+  html += `</tbody></table></div>`;
+  body.innerHTML = html;
+
+  // Bind tap events
+  body.querySelectorAll('.heat-cell').forEach(cell => {
+    cell.addEventListener('click', () => {
+      const h = parseInt(cell.dataset.hour);
+      const d = parseInt(cell.dataset.day);
+      const cellPosts = postMap[h][d];
+      if (cellPosts.length > 0) {
+        showHeatmapPopup(h, d, cellPosts);
+      }
+    });
+  });
+}
+
+// ===== HEATMAP POPUP =====
+function showHeatmapPopup(hour, dayIdx, posts) {
+  const overlay = document.getElementById('popup-overlay');
+  document.getElementById('popup-title').textContent = `${hour}時台・${DAYS_JP[dayIdx]}曜日 (${posts.length}件)`;
+
+  const list = document.getElementById('popup-list');
+  list.innerHTML = posts.map(p => {
+    const d = new Date(p.timestamp);
+    const time = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const actPart = p.activity ? `${getActivityEmoji(p.activity)} ${p.activity}` : '';
+    const moodPart = p.mood ? `${getMoodEmoji(p.mood)} ${p.mood}` : '';
+    const content = [actPart, moodPart].filter(Boolean).join(' / ');
+    return `<div class="popup-post-item"><span class="popup-time">${time}</span><span>${content}</span></div>`;
+  }).join('');
+
+  overlay.classList.add('show');
+}
+
+function closePopup(e) {
+  if (e.target === document.getElementById('popup-overlay')) {
+    document.getElementById('popup-overlay').classList.remove('show');
+  }
+}
+function closePopupBtn() {
+  document.getElementById('popup-overlay').classList.remove('show');
+}
+
+function getActivityEmoji(key) {
+  return ACTIVITIES.find(a => a.key === key)?.emoji || '';
+}
+function getMoodEmoji(key) {
+  return MOODS.find(m => m.key === key)?.emoji || '';
+}
+
+// ===== FREQUENCY CHART =====
+function renderFrequencyChart() {
+  const posts = loadPosts();
+  const canvas = document.getElementById('freq-chart');
+
+  const actCounts = new Array(24).fill(0);
+  const moodCounts = new Array(24).fill(0);
+
+  posts.forEach(p => {
+    const h = new Date(p.timestamp).getHours();
+    if (p.activity) actCounts[h]++;
+    if (p.mood) moodCounts[h]++;
+  });
+
+  if (freqChart) {
+    freqChart.destroy();
+    freqChart = null;
+  }
+
+  // Show/hide empty state without removing the canvas from DOM
+  let emptyEl = canvas.parentElement.querySelector('.empty-state');
+  if (posts.length === 0) {
+    canvas.style.display = 'none';
+    if (!emptyEl) {
+      emptyEl = document.createElement('div');
+      emptyEl.className = 'empty-state';
+      emptyEl.innerHTML = '<span class="emoji">📭</span><p>まだ記録がありません</p>';
+      canvas.parentElement.appendChild(emptyEl);
+    }
+    emptyEl.style.display = '';
+    return;
+  }
+  canvas.style.display = '';
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  freqChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: Array.from({ length: 24 }, (_, i) => `${i}時`),
+      datasets: [
+        {
+          label: '今何してる？',
+          data: actCounts,
+          backgroundColor: 'rgba(244, 114, 182, 0.75)',
+          borderRadius: 4,
+          borderSkipped: false,
+        },
+        {
+          label: '今どんな気持ち？',
+          data: moodCounts,
+          backgroundColor: 'rgba(168, 85, 247, 0.75)',
+          borderRadius: 4,
+          borderSkipped: false,
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 11 } } },
+      },
+      scales: {
+        x: {
+          stacked: true,
+          ticks: { font: { size: 9 }, maxRotation: 0 },
+          grid: { display: false },
+        },
+        y: {
+          stacked: true,
+          ticks: { font: { size: 10 }, stepSize: 1 },
+          beginAtZero: true,
+        }
+      }
+    }
+  });
+}
+
+// ===== PIE CHARTS =====
+const MOOD_COLORS = [
+  '#fda4af', '#fcd34d', '#93c5fd', '#f9a8d4',
+  '#86efac', '#fde68a', '#fef08a', '#d8b4fe',
+  '#a5b4fc', '#e5e7eb', '#d1d5db', '#fb923c'
+];
+const ACTIVITY_COLORS = [
+  '#c7d2fe', '#fbcfe8', '#fde68a', '#a7f3d0',
+  '#fed7aa', '#ddd6fe', '#bae6fd'
+];
+
+function renderPieCharts() {
+  const posts = loadPosts();
+
+  renderSinglePie(
+    posts,
+    'mood-pie-chart',
+    MOODS,
+    p => p.mood,
+    MOOD_COLORS,
+    moodPieChart,
+    v => { moodPieChart = v; }
+  );
+
+  renderSinglePie(
+    posts,
+    'activity-pie-chart',
+    ACTIVITIES,
+    p => p.activity,
+    ACTIVITY_COLORS,
+    activityPieChart,
+    v => { activityPieChart = v; }
+  );
+}
+
+function renderSinglePie(posts, canvasId, items, keyFn, colors, existingChart, setChart) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  const wrapper = canvas.parentElement;
+
+  if (existingChart) {
+    existingChart.destroy();
+    setChart(null);
+  }
+
+  const counts = {};
+  items.forEach(i => { counts[i.key] = 0; });
+  posts.forEach(p => {
+    const k = keyFn(p);
+    if (k && counts[k] !== undefined) counts[k]++;
+  });
+
+  const filtered = items.filter(i => counts[i.key] > 0);
+
+  // Show/hide empty state without removing the canvas from DOM
+  let emptyEl = wrapper.querySelector('.empty-state');
+  if (filtered.length === 0) {
+    canvas.style.display = 'none';
+    if (!emptyEl) {
+      emptyEl = document.createElement('div');
+      emptyEl.className = 'empty-state';
+      emptyEl.innerHTML = '<span class="emoji">📭</span><p>データがありません</p>';
+      wrapper.appendChild(emptyEl);
+    }
+    emptyEl.style.display = '';
+    return;
+  }
+  canvas.style.display = '';
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  const chart = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels: filtered.map(i => `${i.emoji} ${i.key}`),
+      datasets: [{
+        data: filtered.map(i => counts[i.key]),
+        backgroundColor: filtered.map((_, idx) => colors[items.findIndex(it => it.key === filtered[idx].key)] || colors[idx % colors.length]),
+        borderWidth: 2,
+        borderColor: '#fff',
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '60%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { font: { size: 11 }, padding: 8, boxWidth: 14 }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+              const pct = ((ctx.parsed / total) * 100).toFixed(1);
+              return ` ${ctx.parsed}件 (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+  setChart(chart);
+}
+
+// ===== TEST DATA =====
+function injectTestData() {
+  const posts = loadPosts();
+  const now = new Date();
+  const count = 120;
+
+  for (let i = 0; i < count; i++) {
+    const daysAgo = Math.floor(Math.random() * 30);
+    const hoursAgo = Math.floor(Math.random() * 24);
+    const minutesAgo = Math.floor(Math.random() * 60);
+    const ts = new Date(now);
+    ts.setDate(ts.getDate() - daysAgo);
+    ts.setHours(hoursAgo, minutesAgo, 0, 0);
+
+    const roll = Math.random();
+    // Ensure at least one of activity/mood is always set
+    const hasActivity = roll < 0.8;  // 80% have activity
+    const hasMood = roll > 0.2;      // 80% have mood (overlap: 60% have both)
+
+    posts.push({
+      id: generateId(),
+      timestamp: ts.toISOString(),
+      activity: hasActivity ? ACTIVITIES[Math.floor(Math.random() * ACTIVITIES.length)].key : null,
+      mood: hasMood ? MOODS[Math.floor(Math.random() * MOODS.length)].key : null,
+    });
+  }
+
+  savePosts(posts);
+  renderStats();
+  alert(`✅ ${count}件のテストデータを投入しました`);
+}
+
+// ===== DELETE ALL =====
+function deleteAllPosts() {
+  const posts = loadPosts();
+  if (posts.length === 0) {
+    alert('削除する記録がありません');
+    return;
+  }
+  if (confirm(`${posts.length}件の記録をすべて削除しますか？\nこの操作は元に戻せません。`)) {
+    savePosts([]);
+    // Destroy charts
+    if (freqChart) { freqChart.destroy(); freqChart = null; }
+    if (moodPieChart) { moodPieChart.destroy(); moodPieChart = null; }
+    if (activityPieChart) { activityPieChart.destroy(); activityPieChart = null; }
+    renderStats();
+  }
+}
+
+// ===== INIT =====
+renderActivityButtons();
+renderMoodButtons();
+</script>
+</body>
+</html>
