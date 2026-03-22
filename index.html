@@ -770,7 +770,8 @@ function switchSubTab(tab) {
   document.getElementById('tab-' + tab).classList.add('active');
   document.getElementById('subtab-' + tab).classList.add('active');
 
-  if (tab === 'frequency') renderHourlyChart();
+  if (tab === 'heatmap') renderHeatmap();
+  else if (tab === 'frequency') renderHourlyChart();
   else if (tab === 'pie') renderMatrix();
 }
 
@@ -954,6 +955,7 @@ function renderHourlyChart() {
     options: {
       indexAxis: 'y',
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 6, boxWidth: 12 } }
       },
@@ -979,16 +981,15 @@ function renderMatrix() {
 
   const hasNullAct = posts.some(p => !p.activity);
   const hasNullMood = posts.some(p => !p.mood);
-  const rowItems = [...ACTIVITIES, ...(hasNullAct ? [{ key: null, emoji: '—', keyStr: '__null__' }] : [])];
-  const colItems = [...MOODS, ...(hasNullMood ? [{ key: null, emoji: '—', keyStr: '__null__' }] : [])];
-  rowItems.forEach(r => { if (r.key !== null) r.keyStr = r.key; });
-  colItems.forEach(c => { if (c.key !== null) c.keyStr = c.key; });
+  const rowItems = [...ACTIVITIES, ...(hasNullAct ? [{ key: null, emoji: '—' }] : [])];
+  const colItems = [...MOODS, ...(hasNullMood ? [{ key: null, emoji: '—' }] : [])];
+  const rKey = item => item.key ?? '__null__';
 
-  // Build counts map
+  // Build counts map (no mutation of ACTIVITIES/MOODS objects)
   const counts = {};
   rowItems.forEach(r => {
-    counts[r.keyStr] = {};
-    colItems.forEach(c => { counts[r.keyStr][c.keyStr] = 0; });
+    counts[rKey(r)] = {};
+    colItems.forEach(c => { counts[rKey(r)][rKey(c)] = 0; });
   });
   posts.forEach(p => {
     const rk = p.activity ?? '__null__';
@@ -996,7 +997,7 @@ function renderMatrix() {
     if (counts[rk] && counts[rk][ck] !== undefined) counts[rk][ck]++;
   });
 
-  const maxCount = Math.max(...rowItems.flatMap(r => colItems.map(c => counts[r.keyStr][c.keyStr])), 1);
+  const maxCount = Math.max(...rowItems.flatMap(r => colItems.map(c => counts[rKey(r)][rKey(c)])), 1);
 
   let html = '<div class="heatmap-container"><table class="matrix-table"><thead><tr><th></th>';
   colItems.forEach(c => { html += `<th title="${c.key ?? '(なし)'}">${c.emoji}</th>`; });
@@ -1004,7 +1005,7 @@ function renderMatrix() {
   rowItems.forEach(r => {
     html += `<tr><td class="row-label">${r.emoji} ${r.key ?? '(なし)'}</td>`;
     colItems.forEach(c => {
-      const cnt = counts[r.keyStr][c.keyStr];
+      const cnt = counts[rKey(r)][rKey(c)];
       const alpha = cnt === 0 ? 0 : 0.15 + (cnt / maxCount) * 0.75;
       const bg = cnt === 0 ? '#f3f4f6' : `rgba(168,85,247,${alpha.toFixed(2)})`;
       const label = `${r.key ?? '(なし)'}×${c.key ?? '(なし)'}: ${cnt}件`;
@@ -1019,7 +1020,7 @@ function renderMatrix() {
   const combos = [];
   rowItems.forEach(r => {
     colItems.forEach(c => {
-      const cnt = counts[r.keyStr][c.keyStr];
+      const cnt = counts[rKey(r)][rKey(c)];
       if (cnt > 0) combos.push({ r, c, cnt });
     });
   });
