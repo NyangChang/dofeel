@@ -325,6 +325,7 @@
       max-width: 600px;
       max-height: 60vh;
       overflow-y: auto;
+      position: relative;
     }
     #popup-title {
       font-size: 15px;
@@ -819,10 +820,21 @@ function renderFrequencyChart() {
     freqChart = null;
   }
 
+  // Show/hide empty state without removing the canvas from DOM
+  let emptyEl = canvas.parentElement.querySelector('.empty-state');
   if (posts.length === 0) {
-    canvas.parentElement.innerHTML = `<div class="chart-title">時間帯別 投稿頻度</div><div class="empty-state"><span class="emoji">📭</span><p>まだ記録がありません</p></div>`;
+    canvas.style.display = 'none';
+    if (!emptyEl) {
+      emptyEl = document.createElement('div');
+      emptyEl.className = 'empty-state';
+      emptyEl.innerHTML = '<span class="emoji">📭</span><p>まだ記録がありません</p>';
+      canvas.parentElement.appendChild(emptyEl);
+    }
+    emptyEl.style.display = '';
     return;
   }
+  canvas.style.display = '';
+  if (emptyEl) emptyEl.style.display = 'none';
 
   freqChart = new Chart(canvas, {
     type: 'bar',
@@ -921,11 +933,21 @@ function renderSinglePie(posts, canvasId, items, keyFn, colors, existingChart, s
 
   const filtered = items.filter(i => counts[i.key] > 0);
 
+  // Show/hide empty state without removing the canvas from DOM
+  let emptyEl = wrapper.querySelector('.empty-state');
   if (filtered.length === 0) {
-    const title = wrapper.querySelector('.chart-title').textContent;
-    wrapper.innerHTML = `<div class="chart-title">${title}</div><div class="empty-state"><span class="emoji">📭</span><p>データがありません</p></div>`;
+    canvas.style.display = 'none';
+    if (!emptyEl) {
+      emptyEl = document.createElement('div');
+      emptyEl.className = 'empty-state';
+      emptyEl.innerHTML = '<span class="emoji">📭</span><p>データがありません</p>';
+      wrapper.appendChild(emptyEl);
+    }
+    emptyEl.style.display = '';
     return;
   }
+  canvas.style.display = '';
+  if (emptyEl) emptyEl.style.display = 'none';
 
   const chart = new Chart(canvas, {
     type: 'doughnut',
@@ -975,8 +997,10 @@ function injectTestData() {
     ts.setDate(ts.getDate() - daysAgo);
     ts.setHours(hoursAgo, minutesAgo, 0, 0);
 
-    const hasActivity = Math.random() > 0.3;
-    const hasMood = Math.random() > 0.3;
+    const roll = Math.random();
+    // Ensure at least one of activity/mood is always set
+    const hasActivity = roll < 0.8;  // 80% have activity
+    const hasMood = roll > 0.2;      // 80% have mood (overlap: 60% have both)
 
     posts.push({
       id: generateId(),
